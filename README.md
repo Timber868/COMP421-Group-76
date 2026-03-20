@@ -57,3 +57,16 @@ Compile:
 
 Run:
 `java -cp "out:lib/db2jcc4.jar" DBConnectionSmokeTest`
+
+## Makefile
+From the project root (Git Bash / Linux / macOS; on Windows use Git Bash so `make` is available):
+
+| Command | Action |
+|--------|--------|
+| `make` or `make compile` | Compile all `src/*.java` and `test/*.java` into `out/` |
+| `make run` | Run `draftline` |
+| `make test` | Run `DBConnectionSmokeTest` |
+| `make clean` | Remove `out/` |
+| `make help` | Print targets |
+
+Set `SOCSUSER` and `SOCSPASSWD` before `make run` or `make test`. The Makefile picks `;` vs `:` for the Java classpath automatically on Windows vs Unix.
