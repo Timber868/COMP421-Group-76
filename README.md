@@ -23,3 +23,37 @@ If you get errors like `com.ibm.db2.jcc.DB2Driver cannot be resolved`, verify:
 - the file is `lib/db2jcc4.jar` (not a `.zip`)
 - the referenced libraries setting above is present
 - the Java workspace has been reloaded/cleaned
+
+**Terminal compile/run:** `.vscode/settings.json` only applies to the IDE. From the command line you must pass the driver on the classpath (`-cp`) for both `javac` and `java`.
+
+## Environment Variables for DB Login
+Set credentials before running the JDBC program.
+
+PowerShell (Windows):
+
+`$env:SOCSUSER="yoursocsuserid"`
+
+`$env:SOCSPASSWD="yoursocspasswd"`
+
+Bash (Linux/macOS):
+
+`export SOCSUSER=yoursocsuserid`
+
+`export SOCSPASSWD=yoursocspasswd`
+
+## Compile and Run
+Compile and run the connection smoke test from the project root (include `lib/db2jcc4.jar` so `com.ibm.db2.jcc` resolves):
+
+**Windows (PowerShell / cmd):**
+Compile:
+`javac -cp "lib/db2jcc4.jar" -d out src/draftline.java test/DBConnectionSmokeTest.java`
+
+Run:
+`java -cp "out;lib/db2jcc4.jar" DBConnectionSmokeTest`
+
+**Linux / macOS (bash):**
+Compile:
+`javac -cp "lib/db2jcc4.jar" -d out src/draftline.java test/DBConnectionSmokeTest.java`
+
+Run:
+`java -cp "out:lib/db2jcc4.jar" DBConnectionSmokeTest`
