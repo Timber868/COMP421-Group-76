@@ -13,6 +13,10 @@ import java.sql.Statement;
  * failure. No data is inserted, updated, or deleted.
  */
 class DBConnectionSmokeTest {
+    /**
+     * Runs the smoke test; JDBC resources are closed by the enclosing
+     * try-with-resources.
+     */
     public static void main(String[] args) {
         // Reuse the application's connection helper to validate real connection setup.
         try (Connection connection = draftline.openConnection();
