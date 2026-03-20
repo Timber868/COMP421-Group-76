@@ -1,57 +1,133 @@
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Scanner;
 
+/**
+ * Entry point for the COMP 421 JDBC application.
+ * Presents a menu in a loop until the user chooses Quit; opens one DB
+ * connection for the whole session and closes it when the program exits.
+ */
 class draftline {
-    /***
-     * Main method that runs our application
-     * 
-     * @param args
-     * @throws SQLException
+
+    /**
+     * Runs the console menu. Opens the database connection once, then loops
+     * until the user selects Quit. {@link Connection} and {@link Scanner} are
+     * managed with try-with-resources so they always close, including on errors
+     * or early exit (assignment: graceful shutdown).
+     *
+     * @param args unused for now; reserved for future flags if we want to debug
      */
-    public static void main(String[] args) throws SQLException {
-        String tableName = "";
-        int sqlCode = 0; // Variable to hold SQLCODE
-        String sqlState = "00000"; // Variable to hold SQLSTATE
+    public static void main(String[] args) {
+        // Auto-close connection and scanner when this block ends (quit, error, or
+        // return).
+        try (Connection connection = openConnection();
+                Scanner scanner = new Scanner(System.in)) {
 
-        // Initialize the connection to the database
-        Connection connection = openConnection();
+            // Stays true until the user selects Quit (option 6).
+            boolean running = true;
 
-        // Create the statement object for sending SQL statements to the database
-        Statement statement = connection.createStatement();
+            // display menu, parse input and run one action.
+            while (running) {
+                printMainMenu();
 
-        // Finally but importantly close the statement and connection
-        statement.close();
-        connection.close();
+                System.out.print("Please enter your option: ");
+                // Full line avoids issues with stray spaces and empty lines.
+                String line = scanner.nextLine().trim();
+
+                int choice;
+                try {
+                    // Non-numeric input would throw; we recover and re-show the menu.
+                    choice = Integer.parseInt(line);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Enter a number listed on the menu.\n");
+                    continue;
+                }
+
+                // Each branch calls a dedicated task class.
+                switch (choice) {
+                    case 1:
+                        // TODO: e.g. tasks.TaskOne.run(connection, scanner)
+                        System.out.println("(Task 1 — not implemented yet.)\n");
+                        break;
+                    case 2:
+                        // Placeholder; replace with tasks.TaskTwo.run(connection, scanner)
+                        System.out.println("(Task 2 — not implemented yet.)\n");
+                        break;
+                    case 3:
+                        // Placeholder; replace with tasks.TaskThree.run(connection, scanner)
+                        System.out.println("(Task 3 — not implemented yet.)\n");
+                        break;
+                    case 4:
+                        // Placeholder; replace with tasks.TaskFour.run(connection, scanner)
+                        System.out.println("(Task 4 — not implemented yet.)\n");
+                        break;
+                    case 5:
+                        // Placeholder; replace with tasks.TaskFive.run(connection, scanner)
+                        System.out.println("(Task 5 — not implemented yet.)\n");
+                        break;
+                    case 6:
+                        // Quit ends the loop; resources close in the outer try-with-resources.
+                        System.out.println("Goodbye.");
+                        running = false;
+                        break;
+                    default:
+                        // Any integer outside 1–6 is rejected without leaving the loop.
+                        System.out.println("Invalid option. Choose 1–6.\n");
+                        break;
+                }
+            }
+        } catch (SQLException e) {
+            // Covers failed connect and any SQLException that escapes future task code.
+            System.err.println("Database error: " + e.getMessage());
+            System.err.println("SQLSTATE: " + e.getSQLState() + ", SQLCODE: " + e.getErrorCode());
+        }
     }
 
     /**
-     * Method used to establish the connection to our DB2 instance
-     * 
-     * @return A java.sql.Connection instance
-     * @throws SQLException in the event that you cannot conenct to the DB2
-     *                      drivers or your username and password environment
-     *                      variables are not set
+     * Prints the main menu. At least five tasks plus Quit.
+     * Rename options when each {@code tasks.*} handler is wired in.
+     */
+    private static void printMainMenu() {
+        // Simple console UI
+        System.out.println("========== Main Menu ==========");
+        System.out.println("1. Task 1 (TBD)");
+        System.out.println("2. Task 2 (TBD)");
+        System.out.println("3. Task 3 (TBD)");
+        System.out.println("4. Task 4 (TBD)");
+        System.out.println("5. Task 5 (TBD)");
+        System.out.println("6. Quit");
+        System.out.println("================================");
+    }
+
+    /**
+     * Establishes a connection to the course DB2 instance.
+     *
+     * @return an open JDBC {@link Connection}
+     * @throws SQLException if the driver cannot be registered, credentials are
+     *                      missing, or the database rejects the connection
      */
     // Package-visible so local test classes can call the same connection logic.
     static Connection openConnection() throws SQLException {
-        // Register the DB2 JDBC driver so DriverManager can create DB2 connections
         try {
+            // Ensures DB2 is available to DriverManager.getConnection for this JVM.
             DriverManager.registerDriver(new com.ibm.db2.jcc.DB2Driver());
         } catch (Exception e) {
+            // Normalize registration failures as SQLException for one catch style in main.
             throw new SQLException("Failed to register DB2 driver", e);
         }
 
-        // Url we connect to to gain access to the application
+        // Course server and database name (Winter 2026).
         String url = "jdbc:db2://winter2026-comp421.cs.mcgill.ca:50000/comp421";
 
-        // User credentials for our shared database account, cannot be null
+        // Retrieve SOCSUSER and SOCSPASSWD from the env.
         String user = System.getenv("SOCSUSER");
         String pass = System.getenv("SOCSPASSWD");
         if (user == null || pass == null) {
             throw new SQLException("Missing SOCSUSER or SOCSPASSWD environment variable");
         }
 
-        // Return the connection we we use
+        // Opens the session; throws if network, auth, or DB name is wrong.
         return DriverManager.getConnection(url, user, pass);
     }
-
 }
