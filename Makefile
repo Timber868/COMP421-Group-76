@@ -15,7 +15,7 @@ else
 endif
 
 RUN_CP := $(OUT)$(CPSEP)$(JAR)
-SOURCES := $(wildcard src/*.java test/*.java)
+SOURCES := $(wildcard src/*.java src/**/*.java test/*.java)
 
 .PHONY: all compile run test clean help
 

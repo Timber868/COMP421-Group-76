@@ -3,6 +3,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+import tasks.PlayerLookupTask;
+
 /**
  * Entry point for the COMP 421 JDBC application.
  * Presents a menu in a loop until the user chooses Quit; opens one DB

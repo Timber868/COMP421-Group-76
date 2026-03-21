@@ -1,3 +1,5 @@
+package tasks;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,7 +16,7 @@ import java.util.Scanner;
  * or a single token equal to the query. Adjust if {@code PERSON.NAME} format differs
  * (e.g. {@code "Last, First"}).
  */
-class PlayerLookupTask {
+public class PlayerLookupTask {
 
     // Qualifies table names in SQL (must match Project 2 DDL, e.g. CS421G76).
     private static final String SCHEMA = "CS421G76";
@@ -33,7 +35,7 @@ class PlayerLookupTask {
     }
 
     // Entry point from the main menu: prompt, search, optional pick, then profile.
-    static void run(Connection conn, Scanner scanner) {
+    public static void run(Connection conn, Scanner scanner) {
         // Retrieve the last name given
         System.out.print("Enter player last name: ");
         String lastName = scanner.nextLine().trim();
