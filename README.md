@@ -11,6 +11,38 @@ The project uses the course DB2 instance and builds on our earlier project phase
 - one data visualization artifact
 - optional creativity extension(s)
 
+## JDBC application menu (`draftline`)
+
+Run with `make run` (after setting `SOCSUSER` / `SOCSPASSWD`). Main class: `src/draftline.java`. Shared DB connection for the session; task code lives in `src/tasks/`.
+
+| # | What you see in the menu | What it does |
+|---|---------------------------|--------------|
+| **1** | Look up player by last name | **Implemented.** Search players by family name, disambiguate if needed, then show profile, active/recent **contracts**, career **goal** count, and distinct **games played**. |
+| **2** | Create a game and record goals | **TODO.** Pick a **league**, then **home** and **away** teams; set **date**, **stage**, and **referees**; insert **Game**, home/away rows, **GameReferees**, and **PlayedIn** for everyone with an active **contract** on the game date; loop: who scored + minute (and `goal_no`, optional **link**), **INSERT** **GOAL**, bump **goals_scored** until finished. |
+| **3** | Active roster — expiring contracts first | **TODO.** Pick a **team** (from a DB-driven list). Show everyone **on the roster today** (active `CONTRACT`), sorted by **`VALID_UNTIL` ascending** (soonest expiry first). For each player: **name**, **position**, **contract end date**, **career goals**. Read-only. |
+| **4** | Register new person (player / coach / referee) | **TODO.** **INSERT** **PERSON**, then **PLAYER**, **COACH**, or **REFEREE** with the same `pid` and role-specific columns. |
+| **5** | Sign a player (new contract) | **TODO.** Find a **player**, choose **team** / **league**, **jersey**, **length in years**; **valid from** = today, **valid until** derived from length; set any active old **CONTRACT** rows to end **yesterday**; **INSERT** the new row (validate jersey, dates, check constraints). |
+| **6** | Quit | Exit; connection closes. |
+
+### Task 1 — Player lookup (implemented)
+
+Implementation: `src/tasks/PlayerLookupTask.java`.
+
+1. **Input** — The user enters a last name (trimmed). Empty input is rejected with a short message.
+2. **Match** — The program selects rows from `CS421G76.PERSON` joined to `CS421G76.PLAYER` where:
+   - `NAME` ends with a space plus the given last name (case-insensitive pattern `'% LAST'`), **or**
+   - `NAME` equals the whole string (single-token names).
+   Only people who have a `PLAYER` row are returned.
+3. **No matches** — Prints that no player was found for that last name.
+4. **One match** — Prints the single summary line (full name, pid, nationality, birth date) and continues.
+5. **Several matches** — Prints a numbered list of the same summary lines; the user picks `1`–`n`. Invalid or out-of-range input ends the task without showing a profile.
+6. **Profile** — For the chosen player id (`PID` is a UUID string in our schema, not an integer), the app prints:
+   - **Identity / player attributes:** name, nationality, birth date, position, dominant hand, debut date.
+   - **Career stats:** total goals (`GOAL`), distinct games appeared in (`PLAYEDIN`).
+   - **Contracts:** rows where `CURRENT DATE` is between `VALID_FROM` and `VALID_UNTIL`; if none, up to three most recent contracts by `VALID_UNTIL`, with a note that nothing is active “as of today.”
+
+SQL errors are caught, printed with `SQLSTATE` / `SQLCODE`, and the menu loop continues; the shared connection is still closed when the user quits the app.
+
 ## Common last names (our data)
 
 `PERSON.NAME` is stored as a single string (`First Last`). To see which surnames appear most often among **players**, group on the part after the first space (same simplifying rule as in ad hoc SQL; names with multiple spaces in the first name are grouped differently).
@@ -38,25 +70,6 @@ GROUP BY UPPER(TRIM(SUBSTR(RTRIM(per.name), LOCATE(' ', RTRIM(per.name)) + 1)))
 ORDER BY how_many DESC, last_name
 FETCH FIRST 25 ROWS ONLY;
 ```
-
-## How player lookup works
-
-The JDBC app’s **“Look up player by last name”** option is implemented in `src/PlayerLookupTask.java` and invoked from `src/draftline.java` (main menu option **1**).
-
-1. **Input** — The user enters a last name (trimmed). Empty input is rejected with a short message.
-2. **Match** — The program selects rows from `CS421G76.PERSON` joined to `CS421G76.PLAYER` where:
-   - `NAME` ends with a space plus the given last name (case-insensitive pattern `'% LAST'`), **or**
-   - `NAME` equals the whole string (single-token names).
-   Only people who have a `PLAYER` row are returned.
-3. **No matches** — Prints that no player was found for that last name.
-4. **One match** — Prints the single summary line (full name, pid, nationality, birth date) and continues.
-5. **Several matches** — Prints a numbered list of the same summary lines; the user picks `1`–`n`. Invalid or out-of-range input ends the task without showing a profile.
-6. **Profile** — For the chosen player id (`PID` is a UUID string in our schema, not an integer), the app prints:
-   - **Identity / player attributes:** name, nationality, birth date, position, dominant hand, debut date.
-   - **Career stats:** total goals (`GOAL`), distinct games appeared in (`PLAYEDIN`).
-   - **Contracts:** rows where `CURRENT DATE` is between `VALID_FROM` and `VALID_UNTIL`; if none, up to three most recent contracts by `VALID_UNTIL`, with a note that nothing is active “as of today.”
-
-SQL errors are caught, printed with `SQLSTATE` / `SQLCODE`, and the menu loop continues; the shared connection is still closed when the user quits the app.
 
 ## Java + DB2 Setup
 The DB2 JDBC driver `db2jcc4.jar` is included in `lib/`.

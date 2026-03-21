@@ -52,20 +52,24 @@ class draftline {
                         PlayerLookupTask.run(connection, scanner);
                         break;
                     case 2:
-                        // Placeholder; replace with tasks.TaskTwo.run(connection, scanner)
-                        System.out.println("(Task 2 — not implemented yet.)\n");
+                        // TODO: tasks.CreateGameAndGoalsTask.run(connection, scanner)
+                        System.out.println(
+                                "(TODO: Create a game and record goals — not implemented yet.)\n");
                         break;
                     case 3:
-                        // Placeholder; replace with tasks.TaskThree.run(connection, scanner)
-                        System.out.println("(Task 3 — not implemented yet.)\n");
+                        // TODO: tasks.TeamRosterByExpiryTask.run(connection, scanner)
+                        System.out.println(
+                                "(TODO: Active roster (expiring contracts first) — not implemented yet.)\n");
                         break;
                     case 4:
-                        // Placeholder; replace with tasks.TaskFour.run(connection, scanner)
-                        System.out.println("(Task 4 — not implemented yet.)\n");
+                        // TODO: tasks.CreatePersonAndRoleTask.run(connection, scanner)
+                        System.out.println(
+                                "(TODO: Register new person (player/coach/referee) — not implemented yet.)\n");
                         break;
                     case 5:
-                        // Placeholder; replace with tasks.TaskFive.run(connection, scanner)
-                        System.out.println("(Task 5 — not implemented yet.)\n");
+                        // TODO: tasks.NewContractForPlayerTask.run(connection, scanner)
+                        System.out.println(
+                                "(TODO: Sign a player (new contract) — not implemented yet.)\n");
                         break;
                     case 6:
                         // Quit ends the loop; resources close in the outer try-with-resources.
@@ -86,17 +90,16 @@ class draftline {
     }
 
     /**
-     * Prints the main menu. At least five tasks plus Quit.
-     * Rename options when each {@code tasks.*} handler is wired in.
+     * Prints the main menu. Five application tasks plus Quit.
+     * Options 2–5 wire to {@code tasks.*} handlers when implemented.
      */
     private static void printMainMenu() {
-        // Simple console UI
         System.out.println("========== Main Menu ==========");
         System.out.println("1. Look up player by last name");
-        System.out.println("2. Task 2 (TBD)");
-        System.out.println("3. Task 3 (TBD)");
-        System.out.println("4. Task 4 (TBD)");
-        System.out.println("5. Task 5 (TBD)");
+        System.out.println("2. Create a game and record goals");
+        System.out.println("3. Active roster — expiring contracts first");
+        System.out.println("4. Register new person (player / coach / referee)");
+        System.out.println("5. Sign a player (new contract)");
         System.out.println("6. Quit");
         System.out.println("================================");
     }
