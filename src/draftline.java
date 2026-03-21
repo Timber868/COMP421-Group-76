@@ -47,8 +47,7 @@ class draftline {
                 // Each branch calls a dedicated task class.
                 switch (choice) {
                     case 1:
-                        // TODO: e.g. tasks.TaskOne.run(connection, scanner)
-                        System.out.println("(Task 1 — not implemented yet.)\n");
+                        PlayerLookupTask.run(connection, scanner);
                         break;
                     case 2:
                         // Placeholder; replace with tasks.TaskTwo.run(connection, scanner)
@@ -73,7 +72,7 @@ class draftline {
                         break;
                     default:
                         // Any integer outside 1–6 is rejected without leaving the loop.
-                        System.out.println("Invalid option. Choose 1–6.\n");
+                        System.out.println("Invalid option. Choose an integer between 1 to 6.\n");
                         break;
                 }
             }
@@ -91,7 +90,7 @@ class draftline {
     private static void printMainMenu() {
         // Simple console UI
         System.out.println("========== Main Menu ==========");
-        System.out.println("1. Task 1 (TBD)");
+        System.out.println("1. Look up player by last name");
         System.out.println("2. Task 2 (TBD)");
         System.out.println("3. Task 3 (TBD)");
         System.out.println("4. Task 4 (TBD)");
