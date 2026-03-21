@@ -37,6 +37,7 @@ class PlayerLookupTask {
         // Retrieve the last name given
         System.out.print("Enter player last name: ");
         String lastName = scanner.nextLine().trim();
+
         if (lastName.isEmpty()) {
             System.out.println("Please enter a non-empty last name.\n");
             return;
@@ -115,13 +116,13 @@ class PlayerLookupTask {
         }
 
         // If not display all the players that match this last name.
-        System.out.println("Several players match. Pick one:");
+        System.out.println("\nSeveral players match. Pick one:");
         for (int i = 0; i < matches.size(); i++) {
             System.out.println((i + 1) + ". " + matches.get(i).menuLine);
         }
 
         // And prompt user to select the player.
-        System.out.print("Enter number (1-" + matches.size() + "): ");
+        System.out.print("\nEnter number (1-" + matches.size() + "): ");
         String line = scanner.nextLine().trim();
         int idx;
 
@@ -165,7 +166,7 @@ class PlayerLookupTask {
                     System.out.println("Player record missing.");
                     return;
                 }
-                System.out.println("--- Player profile ---");
+                System.out.println("\n--- Player profile ---");
                 System.out.println("Name:          " + rs.getString("NAME"));
                 System.out.println("Nationality:   " + rs.getString("NATIONALITY"));
                 System.out.println("Birth date:    " + formatSqlValue(rs.getObject("BIRTH_DATE")));
