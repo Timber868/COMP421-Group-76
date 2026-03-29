@@ -130,3 +130,16 @@ From the project root (Git Bash / Linux / macOS; on Windows use Git Bash so `mak
 | `make help` | Print targets |
 
 Set `SOCSUSER` and `SOCSPASSWD` before `make run` or `make test`. The Makefile picks `;` vs `:` for the Java classpath automatically on Windows vs Unix.
+
+## Known Probelm
+if `make run` returns the following error on Git Bash on Windows:
+```
+make run
+mkdir -p out
+javac -cp "lib/db2jcc4.jar" -d out src/draftline.java src/tasks/PlayerLookupTask.java test/DBConnectionSmokeTest.java
+java -cp "out:lib/db2jcc4.jar" draftline
+Error: Could not find or load main class draftline
+Caused by: java.lang.ClassNotFoundException: draftline
+make: *** [Makefile:40: run] Error 1
+```
+Just move to PowerShell
