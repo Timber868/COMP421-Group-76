@@ -25,14 +25,20 @@ public class AssignPlayerContract {
                 return;
             }
 
-            System.out.print("Enter the team name that the player should get a contract for: ");
-            String teamName = scanner.nextLine().trim();
-            if (!verifyInput(teamName, "team name", 255)){
-                return;
-            }
-            System.out.print("Enter the league the team plays in: ");
+            System.out.println("Here are the possible leagues for the player to sign in: ");
+            displayLeagues(conn);
+            System.out.print("Enter the name of the league the team plays in (from the list above by name): ");
             String leagueName = scanner.nextLine().trim();
             if (!verifyInput(leagueName, "league name", 255)){
+                return;
+            }
+            if (!displayTeamsInLeague(conn, leagueName)) {
+                return;
+            }
+
+            System.out.print("Enter the team name that the player should get a contract for (from the list above by name): ");
+            String teamName = scanner.nextLine().trim();
+            if (!verifyInput(teamName, "team name", 255)){
                 return;
             }
             if (!checkTeamExists(conn, teamName,  leagueName)){
@@ -77,6 +83,54 @@ public class AssignPlayerContract {
         String until = LocalDate.now().plusYears(Long.parseLong(contractLength)).toString();
         String today = LocalDate.now().toString();
         System.out.println("Contract valid from today (" + today + ") until " + until);
+    }
+
+    private static boolean displayTeamsInLeague(Connection conn, String leagueName) throws SQLException {
+        List<String> teamNames = new ArrayList<String>();
+        
+        String sql = "SELECT team_name FROM " + SCHEMA + ".Team WHERE league_name = ?;";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, leagueName);
+            ResultSet resultSet = ps.executeQuery();
+
+            while (resultSet.next()){
+                String teamName = resultSet.getString("team_name");
+                teamNames.add(teamName);
+            }
+            ps.close();
+        }
+
+        if (teamNames.size() == 0) {
+            System.out.println("Either no league with league name or no teams in league.");
+            return false;
+        }
+
+        System.out.println("Teams to choose from");
+        for (int i = 0; i < teamNames.size(); i++) {
+            System.out.println(String.valueOf(i + 1) + ". " + teamNames.get(i));
+        }
+        return true;
+    }
+
+    private static void displayLeagues(Connection conn) throws SQLException {
+        List<String> leagueNames = new ArrayList<String>();
+        
+        String sql = "SELECT league_name FROM " + SCHEMA + ".League;";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet resultSet = ps.executeQuery();
+            while (resultSet.next()){
+                String leagueName = resultSet.getString("league_name");
+                leagueNames.add(leagueName);
+            }
+            ps.close();
+        }
+
+        System.out.println("Leagues to choose from");
+        for (int i = 0; i < leagueNames.size(); i++) {
+            System.out.println(String.valueOf(i + 1) + ". " + leagueNames.get(i));
+        }
     }
 
     private static void createContract(Connection conn, String pid, String teamName, String leagueName, String contractLength, String jerseyNumber) throws SQLException {
