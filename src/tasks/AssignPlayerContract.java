@@ -45,9 +45,52 @@ public class AssignPlayerContract {
                 return;
             }
 
+            System.out.print("Is this a transfer (Y/n): ");
+            String isTransfer = scanner.nextLine().trim();
+            if (!verifyInput(isTransfer, "active status", 1)){
+                return;
+            }
+            if (isTransfer.compareTo("Y") == 0) {
+                System.out.println("Here are the possible leagues the player is getting traded from: ");
+                displayLeagues(conn);
+                System.out.print("Enter the name of the league the trading team plays in (from the list above by name): ");
+                String fromLeagueName = scanner.nextLine().trim();
+                if (!verifyInput(fromLeagueName, "league name", 255)){
+                    return;
+                }
+                if (!displayTeamsInLeague(conn, fromLeagueName)) {
+                    return;
+                }
+
+                System.out.print("Enter the team name that the player is getting traded from (from the list above by name): ");
+                String fromTeamName = scanner.nextLine().trim();
+                if (!verifyInput(fromTeamName, "team name", 255)){
+                    return;
+                }
+                if (!checkTeamExists(conn, fromTeamName,  fromLeagueName)){
+                    return;
+                }
+
+                System.out.print("Enter the transfer fee: ");
+                String fee = scanner.nextLine().trim();
+                if (!verifyDouble(fee, "fee")) {
+                    return;
+                }
+
+                System.out.print("Enter the transfer type: ");
+                String transferType = scanner.nextLine().trim();
+                if (!verifyInput(transferType, "transfer type", 255)){
+                    return;
+                }
+
+                transferContract(conn, pid, fee, transferType, fromTeamName, fromLeagueName, teamName, leagueName);
+                printTradeInfo(teamName, leagueName, fromLeagueName, fromTeamName);
+                return;
+            }
+
             System.out.print("Enter the length of the contract (in years): ");
             String contractLength = scanner.nextLine().trim();
-            if (!verifyNumber(contractLength, "contract length")){
+            if (!verifyInt(contractLength, "contract length")){
                 return;
             }
 
@@ -58,7 +101,7 @@ public class AssignPlayerContract {
             }
             System.out.print("Enter jersey number. Cannot be one of " + invalidNumbers.trim() + ": ");
             String jerseyNumber = scanner.nextLine().trim();
-            if (!verifyNumber(jerseyNumber, "jersey number")){
+            if (!verifyInt(jerseyNumber, "jersey number")){
                 return;
             }
             if (takenNumbers.contains(Integer.parseInt(jerseyNumber))) {
@@ -83,6 +126,32 @@ public class AssignPlayerContract {
         String until = LocalDate.now().plusYears(Long.parseLong(contractLength)).toString();
         String today = LocalDate.now().toString();
         System.out.println("Contract valid from today (" + today + ") until " + until);
+    }
+
+    private static void printTradeInfo(String teamName, String leagueName, String fromLeagueName, String fromTeamName) {
+        System.out.println("Trade Complete!");
+        System.out.println("--- Trade Info ---");
+        System.out.println("Traded to " + teamName + " in the " + leagueName);
+        System.out.println("Traded from " + fromTeamName + " in the " + fromLeagueName);
+    }
+
+    private static void transferContract(Connection conn, String playerId, String fee, String type, String fromTeamName, String fromLeagueName, String teamName, String leagueName) throws SQLException {        
+        String sql = "{CALL " + SCHEMA + ".CREATE_CONTRACT_FROM_TRADE(?,?, ?, ?, ?, ?, ?, ?, ?)}";
+
+        try (PreparedStatement ps = conn.prepareCall(sql)) {
+            ps.setString(1, playerId);
+            ps.setString(2, UUID.randomUUID().toString());
+            ps.setString(3, UUID.randomUUID().toString());
+            ps.setDouble(4, Double.parseDouble(fee));
+            ps.setString(5, type);
+            ps.setString(6, fromTeamName);
+            ps.setString(7, fromLeagueName);
+            ps.setString(8, teamName);
+            ps.setString(9, leagueName);
+
+            ps.executeUpdate();
+            ps.close();
+        }
     }
 
     private static boolean displayTeamsInLeague(Connection conn, String leagueName) throws SQLException {
@@ -258,7 +327,7 @@ public class AssignPlayerContract {
         return true;
     }
 
-    private static boolean verifyNumber(String input, String property){
+    private static boolean verifyInt(String input, String property){
         if (input.isEmpty()) {
             System.out.println("Please enter a non-empty " + property + ". \n");
             return false;
@@ -266,6 +335,25 @@ public class AssignPlayerContract {
 
         try {
             int num = Integer.parseInt(input);
+            if (num < 0) {
+                System.out.println(property + " cannot be less than 0.");
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            System.out.println("Invalid numerical input");
+            return false;
+        }
+    }
+
+    private static boolean verifyDouble(String input, String property){
+        if (input.isEmpty()) {
+            System.out.println("Please enter a non-empty " + property + ". \n");
+            return false;
+        }
+
+        try {
+            double num = Double.parseDouble(input);
             if (num < 0) {
                 System.out.println(property + " cannot be less than 0.");
                 return false;
