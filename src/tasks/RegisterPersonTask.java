@@ -82,6 +82,8 @@ public class RegisterPersonTask {
             
             ps.executeUpdate();
             ps.close();
+
+            System.out.println("Person successfully created, with name: " + name + ", nationality: " + nationality + " and birthdate: " + birthdate);
         }
         return;
     }
@@ -96,6 +98,8 @@ public class RegisterPersonTask {
             
             ps.executeUpdate();
             ps.close();
+
+            System.out.println("Successfully created referee with certification level: " + certificationLevel + " for person: " + pid);
         }
         return;
     }
@@ -112,6 +116,8 @@ public class RegisterPersonTask {
             
             ps.executeUpdate();
             ps.close();
+
+            System.out.println("Successfully created player with position: " + position + ", dominant hand: " + dominantHand + ", and debut date: " + debutDate + " for person: " + pid);
         }
         return;
     }
@@ -141,6 +147,13 @@ public class RegisterPersonTask {
             
             ps.executeUpdate();
             ps.close();
+
+            if (teamName.compareTo("") == 0 & leagueName.compareTo("") == 0) {
+                System.out.println("Successfully created inactive coach with role specialty: " + roleSpecialty + ", games coached: " + gamesCoached + ", games won: " + gamesWon + " for person: " + pid);
+            }
+            else {
+                System.out.println("Successfully created active coach with role specialty: " + roleSpecialty + ", games coached: " + gamesCoached + ", games won: " + gamesWon + " team: " + teamName + " in the " + leagueName + " for person: " + pid);
+            }
         }
         return;
     }
