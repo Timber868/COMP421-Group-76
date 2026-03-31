@@ -22,6 +22,7 @@ public class AssignPlayerContract {
                 return;
             }
             if (!checkPlayerExists(conn, pid)){
+                System.out.println("Player with pid: " + pid + " does not exist.");
                 return;
             }
 
