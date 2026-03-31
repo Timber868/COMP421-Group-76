@@ -3,6 +3,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+import tasks.CreateGameAndGoalsTask;
 import tasks.PlayerLookupTask;
 import tasks.AssignPlayerContract;
 import tasks.RegisterPersonTask;
@@ -54,9 +55,7 @@ class draftline {
                         PlayerLookupTask.run(connection, scanner);
                         break;
                     case 2:
-                        // TODO: tasks.CreateGameAndGoalsTask.run(connection, scanner)
-                        System.out.println(
-                                "(TODO: Create a game and record goals — not implemented yet.)\n");
+                        CreateGameAndGoalsTask.run(connection, scanner);
                         break;
                     case 3:
                         // TODO: tasks.TeamRosterByExpiryTask.run(connection, scanner)
