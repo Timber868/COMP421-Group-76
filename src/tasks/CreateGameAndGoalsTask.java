@@ -240,7 +240,7 @@ public class CreateGameAndGoalsTask {
     // Find every player contracted to either team on the game date and add them to PLAYEDIN.
     private static int insertPlayedIn(Connection conn, String gid,
             String homeTeam, String awayTeam, String league, Date gameDate) throws SQLException {
-        String selectSql = "SELECT PID FROM " + SCHEMA + ".CONTRACT "
+        String selectSql = "SELECT DISTINCT PID FROM " + SCHEMA + ".CONTRACT "
                 + "WHERE (TEAM_NAME = ? OR TEAM_NAME = ?) "
                 + "AND LEAGUE_NAME = ? "
                 + "AND ? BETWEEN VALID_FROM AND VALID_UNTIL";
