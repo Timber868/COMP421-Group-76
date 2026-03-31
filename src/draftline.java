@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 import tasks.CreateGameAndGoalsTask;
 import tasks.PlayerLookupTask;
+import tasks.TeamRosterByExpiryTask;
 import tasks.AssignPlayerContract;
 import tasks.RegisterPersonTask;
 
@@ -58,9 +59,7 @@ class draftline {
                         CreateGameAndGoalsTask.run(connection, scanner);
                         break;
                     case 3:
-                        // TODO: tasks.TeamRosterByExpiryTask.run(connection, scanner)
-                        System.out.println(
-                                "(TODO: Active roster (expiring contracts first) — not implemented yet.)\n");
+                        TeamRosterByExpiryTask.run(connection, scanner);
                         break;
                     case 4:
                         RegisterPersonTask.run(connection, scanner);
@@ -94,7 +93,7 @@ class draftline {
         System.out.println("========== Main Menu ==========");
         System.out.println("1. Look up player by last name");
         System.out.println("2. Create a game and record goals");
-        System.out.println("3. Active roster — expiring contracts first");
+        System.out.println("3. View an active roster of a team by expiring contracts first");
         System.out.println("4. Register new person (player / coach / referee)");
         System.out.println("5. Sign a player (new contract)");
         System.out.println("6. Quit");
