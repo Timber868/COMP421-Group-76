@@ -9,11 +9,22 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Choose a team, then print the players with active contracts today ordered by the earliest expiry date
+ * Choose a league, then a team within it, then print the players with active contracts today
+ * ordered by the earliest expiry date.
  */
 public class TeamRosterByExpiryTask {
 
     private static final String SCHEMA = "CS421G76";
+
+    private static final class LeagueChoice {
+        final String leagueName;
+        final String menuLine;
+
+        LeagueChoice(String leagueName, String menuLine) {
+            this.leagueName = leagueName;
+            this.menuLine = menuLine;
+        }
+    }
 
     private static final class TeamChoice {
         final String teamName;
@@ -29,9 +40,22 @@ public class TeamRosterByExpiryTask {
 
     public static void run(Connection conn, Scanner scanner) {
         try {
-            List<TeamChoice> teams = fetchTeams(conn);
+            // Step 1: pick a league
+            List<LeagueChoice> leagues = fetchLeagues(conn);
+            if (leagues.isEmpty()) {
+                System.out.println("No leagues with active-contract teams found in the database\n");
+                return;
+            }
+
+            LeagueChoice chosenLeague = chooseLeague(scanner, leagues);
+            if (chosenLeague == null) {
+                return;
+            }
+
+            // Step 2: pick a team within that league
+            List<TeamChoice> teams = fetchTeams(conn, chosenLeague.leagueName);
             if (teams.isEmpty()) {
-                System.out.println("No teams found in the database\n");
+                System.out.println("No teams with active contracts found in that league\n");
                 return;
             }
 
@@ -47,24 +71,69 @@ public class TeamRosterByExpiryTask {
         }
     }
 
-    private static List<TeamChoice> fetchTeams(Connection conn) throws SQLException {
+    private static List<LeagueChoice> fetchLeagues(Connection conn) throws SQLException {
+        String sql = "SELECT DISTINCT t.LEAGUE_NAME "
+                + "FROM " + SCHEMA + ".TEAM t "
+                + "INNER JOIN " + SCHEMA + ".CONTRACT c "
+                + "ON c.TEAM_NAME = t.TEAM_NAME AND c.LEAGUE_NAME = t.LEAGUE_NAME "
+                + "AND CURRENT DATE BETWEEN c.VALID_FROM AND c.VALID_UNTIL "
+                + "ORDER BY t.LEAGUE_NAME";
+
+        List<LeagueChoice> leagues = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String leagueName = rs.getString("LEAGUE_NAME");
+                leagues.add(new LeagueChoice(leagueName, leagueName));
+            }
+        }
+        return leagues;
+    }
+
+    private static LeagueChoice chooseLeague(Scanner scanner, List<LeagueChoice> leagues) {
+        System.out.println("\nChoose a league:");
+        for (int i = 0; i < leagues.size(); i++) {
+            System.out.println((i + 1) + ". " + leagues.get(i).menuLine);
+        }
+
+        System.out.print("\nEnter number (1-" + leagues.size() + "): ");
+        String line = scanner.nextLine().trim();
+
+        int idx;
+        try {
+            idx = Integer.parseInt(line);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid choice\n");
+            return null;
+        }
+
+        if (idx < 1 || idx > leagues.size()) {
+            System.out.println("That number is not on the list\n");
+            return null;
+        }
+
+        return leagues.get(idx - 1);
+    }
+
+    private static List<TeamChoice> fetchTeams(Connection conn, String leagueName) throws SQLException {
         String sql = "SELECT DISTINCT t.TEAM_NAME, t.LEAGUE_NAME, t.CITY "
                 + "FROM " + SCHEMA + ".TEAM t "
                 + "INNER JOIN " + SCHEMA + ".CONTRACT c "
                 + "ON c.TEAM_NAME = t.TEAM_NAME AND c.LEAGUE_NAME = t.LEAGUE_NAME "
                 + "AND CURRENT DATE BETWEEN c.VALID_FROM AND c.VALID_UNTIL "
-                + "ORDER BY t.LEAGUE_NAME, t.TEAM_NAME";
+                + "WHERE t.LEAGUE_NAME = ? "
+                + "ORDER BY t.TEAM_NAME";
 
         List<TeamChoice> teams = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                String teamName = rs.getString("TEAM_NAME");
-                String leagueName = rs.getString("LEAGUE_NAME");
-                String city = rs.getString("CITY");
-                String menuLine = teamName + " (" + leagueName + ")"
-                        + (city != null ? " | " + city : "");
-                teams.add(new TeamChoice(teamName, leagueName, menuLine));
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, leagueName);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String teamName = rs.getString("TEAM_NAME");
+                    String city = rs.getString("CITY");
+                    String menuLine = teamName + (city != null ? " | " + city : "");
+                    teams.add(new TeamChoice(teamName, leagueName, menuLine));
+                }
             }
         }
         return teams;
