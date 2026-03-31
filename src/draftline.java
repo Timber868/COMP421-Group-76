@@ -3,8 +3,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+import tasks.CreateGameAndGoalsTask;
 import tasks.PlayerLookupTask;
 import tasks.TeamRosterByExpiryTask;
+import tasks.AssignPlayerContract;
+import tasks.RegisterPersonTask;
 
 /**
  * Entry point for the COMP 421 JDBC application.
@@ -53,22 +56,16 @@ class draftline {
                         PlayerLookupTask.run(connection, scanner);
                         break;
                     case 2:
-                        // TODO: tasks.CreateGameAndGoalsTask.run(connection, scanner)
-                        System.out.println(
-                                "(TODO: Create a game and record goals — not implemented yet.)\n");
+                        CreateGameAndGoalsTask.run(connection, scanner);
                         break;
                     case 3:
                         TeamRosterByExpiryTask.run(connection, scanner);
                         break;
                     case 4:
-                        // TODO: tasks.CreatePersonAndRoleTask.run(connection, scanner)
-                        System.out.println(
-                                "(TODO: Register new person (player/coach/referee) — not implemented yet.)\n");
+                        RegisterPersonTask.run(connection, scanner);
                         break;
                     case 5:
-                        // TODO: tasks.NewContractForPlayerTask.run(connection, scanner)
-                        System.out.println(
-                                "(TODO: Sign a player (new contract) — not implemented yet.)\n");
+                        AssignPlayerContract.run(connection, scanner);
                         break;
                     case 6:
                         // Quit ends the loop; resources close in the outer try-with-resources.
