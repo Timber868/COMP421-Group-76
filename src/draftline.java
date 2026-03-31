@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 import tasks.PlayerLookupTask;
+import tasks.TeamRosterByExpiryTask;
 
 /**
  * Entry point for the COMP 421 JDBC application.
@@ -57,9 +58,7 @@ class draftline {
                                 "(TODO: Create a game and record goals — not implemented yet.)\n");
                         break;
                     case 3:
-                        // TODO: tasks.TeamRosterByExpiryTask.run(connection, scanner)
-                        System.out.println(
-                                "(TODO: Active roster (expiring contracts first) — not implemented yet.)\n");
+                        TeamRosterByExpiryTask.run(connection, scanner);
                         break;
                     case 4:
                         // TODO: tasks.CreatePersonAndRoleTask.run(connection, scanner)
