@@ -49,7 +49,7 @@ public class PlayerLookupTask {
             // Find all the players whose last name matches the input.
             List<PlayerMatch> matches = findPlayersByLastName(conn, lastName);
             if (matches.isEmpty()) {
-                System.out.println("Sorry — no player found with that last name.\n");
+                System.out.println("Sorry there is no player found with that last name.\n");
                 return;
             }
 
