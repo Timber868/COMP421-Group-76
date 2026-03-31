@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
+import java.sql.CallableStatement;
+import java.sql.Types;
 
 // Task 2: walks the user through creating a game and recording goals for it.
 // Inserts into GAME, GAMEHOMETEAM, GAMEAWAYTEAM, GAMEREFEREES, PLAYEDIN, and GOAL.
@@ -81,7 +83,7 @@ public class CreateGameAndGoalsTask {
                 insertGameTeam(conn, gid, awayTeam, league, "GAMEAWAYTEAM");
                 insertGameReferees(conn, gid, selectedRefPids);
                 // Enroll every player with an active contract for either team on the game date
-                int enrolled = insertPlayedIn(conn, gid, homeTeam, awayTeam, league, gameDate);
+                int enrolled = insertPlayedIn(conn, gid);
                 conn.commit();
                 System.out.println("\nGame created (GID: " + gid + ").");
                 System.out.println("Enrolled " + enrolled + " player(s) into PlayedIn.");
@@ -237,37 +239,21 @@ public class CreateGameAndGoalsTask {
         }
     }
 
-    // Find every player contracted to either team on the game date and add them to PLAYEDIN.
-    private static int insertPlayedIn(Connection conn, String gid,
-            String homeTeam, String awayTeam, String league, Date gameDate) throws SQLException {
-        String selectSql = "SELECT DISTINCT PID FROM " + SCHEMA + ".CONTRACT "
-                + "WHERE (TEAM_NAME = ? OR TEAM_NAME = ?) "
-                + "AND LEAGUE_NAME = ? "
-                + "AND ? BETWEEN VALID_FROM AND VALID_UNTIL";
-        String insertSql = "INSERT INTO " + SCHEMA + ".PLAYEDIN (PID, GID) VALUES (?, ?)";
+    // Calls the stored procedure that registers every eligible player for the game in PLAYEDIN.
+    // Returns the number of newly inserted PLAYEDIN rows.
+    private static int insertPlayedIn(Connection conn, String gid) throws SQLException {
+        String callSql = "CALL " + SCHEMA + ".REGISTER_ELIGIBLE_PLAYERS_FOR_GAME(?, ?, ?)";
 
-        List<String> pids = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
-            ps.setString(1, homeTeam);
-            ps.setString(2, awayTeam);
-            ps.setString(3, league);
-            ps.setDate(4, gameDate);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    pids.add(rs.getString("PID"));
-                }
-            }
-        }
+        try (CallableStatement cs = conn.prepareCall(callSql)) {
+            cs.setString(1, gid);
+            cs.registerOutParameter(2, Types.INTEGER);
+            cs.registerOutParameter(3, Types.INTEGER);
 
-        try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
-            for (String pid : pids) {
-                ps.setString(1, pid);
-                ps.setString(2, gid);
-                ps.executeUpdate();
-            }
+            cs.execute();
+            return cs.getInt(2);
         }
-        return pids.size();
     }
+
 
     // Loop until the user is done entering goals. Each goal is its own transaction.
     private static void recordGoals(Connection conn, Scanner scanner, String gid,
