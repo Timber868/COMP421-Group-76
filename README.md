@@ -1,53 +1,45 @@
 # COMP421 Group 76 - Project 3
 
-This repository contains our work for COMP 421 Project 3 ("Writing your Application"), Winter 2026.
+## How to Run
 
-## Project Scope
-The project uses the course DB2 instance and builds on our earlier project phases. The deliverable includes:
+### 1. Set credentials
 
-- a stored procedure
-- a Java JDBC application with a menu loop
-- indexing work
-- one data visualization artifact
-- optional creativity extension(s)
+PowerShell (Windows):
+```
+$env:SOCSUSER="yoursocsuserid"
+$env:SOCSPASSWD="yoursocspasswd"
+```
 
-## JDBC application menu (`draftline`)
+Bash (Linux/macOS):
+```
+export SOCSUSER=yoursocsuserid
+export SOCSPASSWD=yoursocspasswd
+```
 
-Run with `make run` (after setting `SOCSUSER` / `SOCSPASSWD`). Main class: `src/draftline.java`. Shared DB connection for the session; task code lives in `src/tasks/`.
+### 2. Compile and run
 
-| # | What you see in the menu | What it does |
-|---|---------------------------|--------------|
-| **1** | Look up player by last name | **Implemented.** Search players by family name, disambiguate if needed, then show profile, active/recent **contracts**, career **goal** count, and distinct **games played**. |
-| **2** | Create a game and record goals | **TODO.** Pick a **league**, then **home** and **away** teams; set **date**, **stage**, and **referees**; insert **Game**, home/away rows, **GameReferees**, and **PlayedIn** for everyone with an active **contract** on the game date; loop: who scored + minute (and `goal_no`, optional **link**), **INSERT** **GOAL**, bump **goals_scored** until finished. |
-| **3** | Active roster — expiring contracts first | **Implemented.** Pick a **team** (from a DB-driven list). Show everyone **on the roster today** (active `CONTRACT`), sorted by **`VALID_UNTIL` ascending** (soonest expiry first). For each player: **name**, **position**, **contract end date**, **career goals**. Read-only. |
-| **4** | Register new person (player / coach / referee) | **TODO.** **INSERT** **PERSON**, then **PLAYER**, **COACH**, or **REFEREE** with the same `pid` and role-specific columns. |
-| **5** | Sign a player (new contract) | **TODO.** Find a **player**, choose **team** / **league**, **jersey**, **length in years**; **valid from** = today, **valid until** derived from length; set any active old **CONTRACT** rows to end **yesterday**; **INSERT** the new row (validate jersey, dates, check constraints). |
+```
+make run
+```
+
+> **Note:** On Windows, use **PowerShell**, not Git Bash. Git Bash misresolves the Java classpath separator and will throw `ClassNotFoundException`.
+
+---
+
+## Application Menu
+
+| # | Menu option | What it does |
+|---|-------------|--------------|
+| **1** | Look up player by last name | Search by family name, disambiguate if needed, then show profile, active/recent contracts, career goal count, and distinct games played. |
+| **2** | Create a game and record goals | Pick a league, then home and away teams; set date, stage, venue, and referees; enroll all eligible players into PlayedIn via stored procedure; loop to record goals (scorer, minute, goal number, optional link); award points on finish. |
+| **3** | Active roster — expiring contracts first | Pick a league, then a team. Show everyone on the roster today (active contract), sorted by earliest expiry. For each player: name, position, contract end date, career goals. |
+| **4** | Register new person (player / coach / referee) | Insert into PERSON, then into PLAYER, COACH, or REFEREE with the same pid and role-specific columns. |
+| **5** | Sign a player (new contract) | Find a player, choose team/league, jersey, and contract length; expire any overlapping active contract; insert the new row. |
 | **6** | Quit | Exit; connection closes. |
 
-### Task 1 — Player lookup (implemented)
+---
 
-Implementation: `src/tasks/PlayerLookupTask.java`.
-
-1. **Input** — The user enters a last name (trimmed). Empty input is rejected with a short message.
-2. **Match** — The program selects rows from `CS421G76.PERSON` joined to `CS421G76.PLAYER` where:
-   - `NAME` ends with a space plus the given last name (case-insensitive pattern `'% LAST'`), **or**
-   - `NAME` equals the whole string (single-token names).
-   Only people who have a `PLAYER` row are returned.
-3. **No matches** — Prints that no player was found for that last name.
-4. **One match** — Prints the single summary line (full name, pid, nationality, birth date) and continues.
-5. **Several matches** — Prints a numbered list of the same summary lines; the user picks `1`–`n`. Invalid or out-of-range input ends the task without showing a profile.
-6. **Profile** — For the chosen player id (`PID` is a UUID string in our schema, not an integer), the app prints:
-   - **Identity / player attributes:** name, nationality, birth date, position, dominant hand, debut date.
-   - **Career stats:** total goals (`GOAL`), distinct games appeared in (`PLAYEDIN`).
-   - **Contracts:** rows where `CURRENT DATE` is between `VALID_FROM` and `VALID_UNTIL`; if none, up to three most recent contracts by `VALID_UNTIL`, with a note that nothing is active “as of today.”
-
-SQL errors are caught, printed with `SQLSTATE` / `SQLCODE`, and the menu loop continues; the shared connection is still closed when the user quits the app.
-
-## Common last names (our data)
-
-`PERSON.NAME` is stored as a single string (`First Last`). To see which surnames appear most often among **players**, group on the part after the first space (same simplifying rule as in ad hoc SQL; names with multiple spaces in the first name are grouped differently).
-
-Recent ranking from our database (good values to try in **player lookup**, menu option 1 in `draftline`):
+## Common last names (useful for testing player lookup)
 
 | Last name | Player rows |
 |-----------|-------------|
@@ -56,90 +48,22 @@ Recent ranking from our database (good values to try in **player lookup**, menu 
 | Moore     | 3 |
 | Smith     | 3 |
 
-Other surnames also rank near the top; re-run your `GROUP BY` query on `PERSON` joined to `PLAYER` to refresh counts after reloads.
+---
 
-Example query:
-
-```sql
-SELECT
-  UPPER(TRIM(SUBSTR(RTRIM(per.name), LOCATE(' ', RTRIM(per.name)) + 1))) AS last_name,
-  COUNT(*) AS how_many
-FROM CS421G76.PERSON per
-JOIN CS421G76.PLAYER pl ON per.pid = pl.pid
-GROUP BY UPPER(TRIM(SUBSTR(RTRIM(per.name), LOCATE(' ', RTRIM(per.name)) + 1)))
-ORDER BY how_many DESC, last_name
-FETCH FIRST 25 ROWS ONLY;
-```
-
-## Java + DB2 Setup
-The DB2 JDBC driver `db2jcc4.jar` is included in `lib/`.
-
-Cursor/VS Code resolves the driver through `.vscode/settings.json`:
-
-`"java.project.referencedLibraries": ["lib/**/*.jar"]`
-
-If you get errors like `com.ibm.db2.jcc.DB2Driver cannot be resolved`, verify:
-
-- the file is `lib/db2jcc4.jar` (not a `.zip`)
-- the referenced libraries setting above is present
-- the Java workspace has been reloaded/cleaned
-
-**Terminal compile/run:** `.vscode/settings.json` only applies to the IDE. From the command line you must pass the driver on the classpath (`-cp`) for both `javac` and `java`.
-
-## Environment Variables for DB Login
-Set credentials before running the JDBC program.
-
-PowerShell (Windows):
-
-`$env:SOCSUSER="yoursocsuserid"`
-
-`$env:SOCSPASSWD="yoursocspasswd"`
-
-Bash (Linux/macOS):
-
-`export SOCSUSER=yoursocsuserid`
-
-`export SOCSPASSWD=yoursocspasswd`
-
-## Compile and Run
-Compile and run the connection smoke test from the project root (include `lib/db2jcc4.jar` so `com.ibm.db2.jcc` resolves):
-
-**Windows (PowerShell / cmd):**
-Compile:
-`javac -cp "lib/db2jcc4.jar" -d out src/draftline.java test/DBConnectionSmokeTest.java`
-
-Run:
-`java -cp "out;lib/db2jcc4.jar" DBConnectionSmokeTest`
-
-**Linux / macOS (bash):**
-Compile:
-`javac -cp "lib/db2jcc4.jar" -d out src/draftline.java test/DBConnectionSmokeTest.java`
-
-Run:
-`java -cp "out:lib/db2jcc4.jar" DBConnectionSmokeTest`
-
-## Makefile
-From the project root (Git Bash / Linux / macOS; on Windows use Git Bash so `make` is available):
+## Other Make targets
 
 | Command | Action |
-|--------|--------|
+|---------|--------|
 | `make` or `make compile` | Compile all `src/*.java` and `test/*.java` into `out/` |
-| `make run` | Run `draftline` |
+| `make run` | Compile and run `draftline` |
 | `make test` | Run `DBConnectionSmokeTest` |
 | `make clean` | Remove `out/` |
 | `make help` | Print targets |
 
-Set `SOCSUSER` and `SOCSPASSWD` before `make run` or `make test`. The Makefile picks `;` vs `:` for the Java classpath automatically on Windows vs Unix.
+---
 
-## Known Probelm
-if `make run` returns the following error on Git Bash on Windows:
-```
-make run
-mkdir -p out
-javac -cp "lib/db2jcc4.jar" -d out src/draftline.java src/tasks/PlayerLookupTask.java test/DBConnectionSmokeTest.java
-java -cp "out:lib/db2jcc4.jar" draftline
-Error: Could not find or load main class draftline
-Caused by: java.lang.ClassNotFoundException: draftline
-make: *** [Makefile:40: run] Error 1
-```
-Just move to PowerShell
+## Project overview
+
+This project uses the course DB2 instance and builds on earlier project phases. The deliverable includes a stored procedure, a Java JDBC application with a menu loop, indexing work, one data visualization artifact, and optional creativity extensions.
+
+The DB2 JDBC driver `db2jcc4.jar` is included in `lib/`. Cursor/VS Code resolves it through `.vscode/settings.json` (`"java.project.referencedLibraries": ["lib/**/*.jar"]`). From the terminal the Makefile handles the classpath automatically.
